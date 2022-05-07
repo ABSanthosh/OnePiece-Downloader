@@ -74,7 +74,9 @@ with open('links.json', 'r') as f:
         key = list(data.keys())[i]
 
         if value.get("streamta") != None:
+            print("Downloading {Episode}...".format(Episode=key),end="")
             downloadVideo(value.get("streamta").split("/")[-1],key)
+            print("    (Done)")
         elif(value.get("streamsb") != None):
             # print(value.get("streamsb"))
             pass
