@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.request
 import json
+from multiprocessing.pool import ThreadPool
 
 
 mainList = {
@@ -58,25 +59,38 @@ def saveJsonToFile():
     with open('links.json', 'w') as f:
         json.dump(newObj, f)
 
-def downloadVideo(id,name):
-    base = "https://2475155055.tapecontent.net/radosgw/{id}/0matIc0E6lPTKOgdGZFsSCP-8VCIUvE83dFp7oN53bTdWTlh5jZ-cVbi1F00TfDflgvjFmaW9M55qhrjKVqrLO8DMZpb5GPspp9oy-8aFgszss90KHy3jVIXwAV06kcI644joVtwDVcDd6I5TO1wavwPsPA7yXmUEFqkqdnQ_OHQrj2kAStYz2SIPbFcC9gy0fN34gvqVDYILh90VJiXSceJDUtQ4_F6HsH68-hTNX0fjiPal7AZul1wdptUND4gf6HjseUaiZaa9sEY/video.mp4?stream=1".format(id=id)
+def downloadVideo(paramStr):
+    linkId,name = paramStr.split("||")[0],paramStr.split("||")[1]
+    base = "https://2475155055.tapecontent.net/radosgw/{linkId}/0matIc0E6lPTKOgdGZFsSCP-8VCIUvE83dFp7oN53bTdWTlh5jZ-cVbi1F00TfDflgvjFmaW9M55qhrjKVqrLO8DMZpb5GPspp9oy-8aFgszss90KHy3jVIXwAV06kcI644joVtwDVcDd6I5TO1wavwPsPA7yXmUEFqkqdnQ_OHQrj2kAStYz2SIPbFcC9gy0fN34gvqVDYILh90VJiXSceJDUtQ4_F6HsH68-hTNX0fjiPal7AZul1wdptUND4gf6HjseUaiZaa9sEY/video.mp4?stream=1".format(linkId=linkId)
     urllib.request.urlretrieve(base, './OnePiece/{name}.mp4'.format(name=name)) 
 
 # fetchAllDownloadLinks()
 # saveJsonToFile()
 
+def run_download_parallel(_urls):
+    # Run 5 multiple threads. Each call will take the next element in urls list
+    results = ThreadPool(10).imap_unordered(downloadVideo, _urls)
+    for r in results:
+        print(r)
 
+
+streamtapeParamList =[]
 with open('links.json', 'r') as f:
     data = json.load(f)
+
 
     for i in range(0,len(data.keys())):
         value = list(data.values())[i]
         key = list(data.keys())[i]
 
         if value.get("streamta") != None:
-            print("Downloading {Episode}...".format(Episode=key),end="")
-            downloadVideo(value.get("streamta").split("/")[-1],key)
-            print("    (Done)")
+            linkId = value.get("streamta").split("/")[-1]
+            # print("Downloading {Episode}...".format(Episode=key),end="")
+            # streamtapeParamList.append({id=,name=key})
+            streamtapeParamList.append("{linkId}||{key}".format(linkId=linkId,key=key))
+            # print("    (Done)")
         elif(value.get("streamsb") != None):
             # print(value.get("streamsb"))
             pass
+
+run_download_parallel(streamtapeParamList)
